@@ -6,7 +6,6 @@
 # Copyright:   (c) 2016 wxWidgets development team
 # Licence:     wxWindows licence
 #############################################################################
-
 cmake_minimum_required(VERSION 2.8.12)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
