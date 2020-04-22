@@ -10,6 +10,9 @@
 include(CMakeDependentOption)
 include(CMakeParseArguments)           # For compatibility with CMake < 3.4
 include(ExternalProject)
+
+set(wxSOURCE_DIR ${wxWidgets_SOURCE_DIR})
+
 if(CMAKE_GENERATOR STREQUAL "Xcode")
     # wxWidgets does not use the unity features of cotire so we can
     # include Obj-C files when using precompiled headers with Xcode

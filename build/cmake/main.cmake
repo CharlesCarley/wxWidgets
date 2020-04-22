@@ -7,7 +7,7 @@
 # Licence:     wxWindows licence
 #############################################################################
 
-list(APPEND CMAKE_MODULE_PATH "${wxSOURCE_DIR}/build/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${wxROOT_DIR}/build/cmake/modules")
 
 include(build/cmake/files.cmake)            # Files list
 include(build/cmake/functions.cmake)        # wxWidgets functions
@@ -17,9 +17,9 @@ include(build/cmake/init.cmake)             # Init various global build vars
 include(build/cmake/install.cmake)          # Install target support
 
 add_subdirectory(build/cmake/lib libs)
-add_subdirectory(build/cmake/utils utils)
 
 if(wxBUILD_SAMPLES)
+    add_subdirectory(build/cmake/utils utils)
     add_subdirectory(build/cmake/samples samples)
 endif()
 

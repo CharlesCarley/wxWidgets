@@ -8,15 +8,15 @@
 #############################################################################
 
 # Global build options
-wx_option(wxBUILD_SHARED "Build wx libraries as shared libs" ${BUILD_SHARED_LIBS})
-wx_option(wxBUILD_MONOLITHIC "build wxWidgets as single library" OFF)
+wx_option(wxBUILD_SHARED "Build wx libraries as shared libs" OFF)
+wx_option(wxBUILD_MONOLITHIC "build wxWidgets as single library" ON)
 wx_option(wxBUILD_SAMPLES "Build only important samples (SOME) or ALL" OFF
     STRINGS SOME ALL OFF)
 wx_option(wxBUILD_TESTS "Build console tests (CONSOLE_ONLY) or ALL" OFF
     STRINGS CONSOLE_ONLY ALL OFF)
 wx_option(wxBUILD_DEMOS "Build demos" OFF)
 wx_option(wxBUILD_PRECOMP "Use precompiled headers")
-wx_option(wxBUILD_INSTALL "Create install/uninstall target for wxWidgets")
+wx_option(wxBUILD_INSTALL "Create install/uninstall target for wxWidgets" OFF)
 wx_option(wxBUILD_COMPATIBILITY
     "enable compatibilty with earlier wxWidgets versions" 3.0 STRINGS 2.8 3.0 3.1)
 # Allow user specified setup.h folder

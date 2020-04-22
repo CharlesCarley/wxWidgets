@@ -6,6 +6,7 @@
 # Copyright:   (c) 2016 wxWidgets development team
 # Licence:     wxWindows licence
 #############################################################################
+
 cmake_minimum_required(VERSION 2.8.12)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -31,13 +32,16 @@ if(APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9 CACHE STRING "OS X Deployment Target")
 endif()
 
-include(build/cmake/policies.cmake NO_POLICY_SCOPE)
 
 project(wxWidgets)
+set(CMAKE_MODULE_PATH ${wxWidgets_SOURCE_DIR})
+
+include(build/cmake/policies.cmake NO_POLICY_SCOPE)
 
 # Initialize variables for quick access to wx root dir in sub dirs
-set(wxSOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(wxBINARY_DIR ${CMAKE_BINARY_DIR})
+set(wxROOT_DIR   ${wxWidgets_SOURCE_DIR})
+set(wxSOURCE_DIR ${wxWidgets_CURRENT_SOURCE_DIR})
+set(wxBINARY_DIR ${wxWidgets_BINARY_DIR})
 set(wxOUTPUT_DIR ${wxBINARY_DIR}/lib)
 
 # parse the version number from wx/version.h and include in wxMAJOR_VERSION and wxMINOR_VERSION
