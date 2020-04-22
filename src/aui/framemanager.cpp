@@ -607,12 +607,11 @@ wxBEGIN_EVENT_TABLE(wxAuiManager, wxEvtHandler)
 wxEND_EVENT_TABLE()
 
 
-wxAuiManager::wxAuiManager(wxWindow* managed_wnd, unsigned int flags)
+wxAuiManager::wxAuiManager(wxWindow* managed_wnd, unsigned int flags, wxAuiDockArt* art)
 {
     m_action = actionNone;
     m_actionWindow = NULL;
     m_hoverButton = NULL;
-    m_art = new wxAuiDefaultDockArt;
     m_hintWnd = NULL;
     m_flags = flags;
     m_skipping = false;
@@ -622,6 +621,12 @@ wxAuiManager::wxAuiManager(wxWindow* managed_wnd, unsigned int flags)
     m_dockConstraintY = 0.3;
     m_reserved = NULL;
     m_currentDragItem = -1;
+
+    if (art == NULL)
+        m_art = new wxAuiDefaultDockArt;
+    else
+        m_art = art;
+
 
     if (managed_wnd)
     {

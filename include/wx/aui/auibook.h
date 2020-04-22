@@ -306,6 +306,7 @@ public:
     virtual void Split(size_t page, int direction);
 
     const wxAuiManager& GetAuiManager() const { return m_mgr; }
+    wxAuiManager& GetAuiManager(){ return m_mgr; }
 
     // Sets the normal font
     void SetNormalFont(const wxFont& font);

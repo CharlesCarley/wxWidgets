@@ -406,7 +406,8 @@ class WXDLLIMPEXP_AUI wxAuiManager : public wxEvtHandler
 public:
 
     wxAuiManager(wxWindow* managedWnd = NULL,
-                   unsigned int flags = wxAUI_MGR_DEFAULT);
+                 unsigned int flags      = wxAUI_MGR_DEFAULT,
+                 wxAuiDockArt* art = NULL);
     virtual ~wxAuiManager();
     void UnInit();
 
