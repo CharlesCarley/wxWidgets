@@ -1769,9 +1769,16 @@ wxAuiNotebook::~wxAuiNotebook()
     m_mgr.UnInit();
 }
 
-void wxAuiNotebook::SetArtProvider(wxAuiTabArt* art)
+void wxAuiNotebook::SetArtProvider(wxAuiTabArt* art, wxAuiDockArt* dockArt)
 {
     m_tabs.SetArtProvider(art);
+
+    if (dockArt != NULL)
+    {
+        // If a custom dock art is implemented this class needs a copy of it here too.
+        // Otherwise sash boundaries will not draw correctly.
+        m_mgr.SetArtProvider(dockArt);
+    }
 
     // Update the height and do nothing else if it did something but otherwise
     // (i.e. if the new art provider uses the same height as the old one) we
