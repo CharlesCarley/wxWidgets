@@ -91,10 +91,10 @@ NetBSD, Solaris, AIX, ...) and require GTK+ 2.6 or later or GTK+ 3.x. The
 primary supported compiler is GNU g++.
 
 @li wxOSX/Cocoa: This is the native port for Apple computers. wxOSX/Cocoa
-supports 32 or 64 bit Intel Macs running OS X 10.7 or later. The port can be
+supports 32 or 64 bit Intel Macs running macOS 10.10 or later. The port can be
 built either with g++ or clang.
 
-Other platforms (e.g. iOS - with a minimum requirement of iOS 9), compilers (Borland C++
+Other platforms (e.g. iOS - with a minimum requirement of iOS 13), compilers (Borland C++
 under Windows, Sun CC, HP-UX aCC, IBM xlC or SGI mipsPro under Unix) and ports (
 wxQT, wxGTK1, wxX11, wxDFB...) are also supported but to a lesser extent.
 Please see the @subpage page_port "platform details page" for more information.
@@ -111,13 +111,12 @@ configurations but at least 1GB and possibly more is required.
 
 @section page_introduction_where Where to get wxWidgets and support for it
 
-The download links can be found at https://www.wxwidgets.org. The primary
-download location is https://github.com/wxWidgets/wxWidgets/releases/latest.
+The download links can be found at https://www.wxwidgets.org/downloads/.
 Additionally, the latest version can always be retrieved from our version
 control system using Git (https://github.com/wxWidgets/wxWidgets).
 
-wxWidgets documentation that you are reading is also available online at
-https://docs.wxwidgets.org/trunk/ and please also visit our wiki at
+The latest version of wxWidgets documentation that you are reading is available
+online at https://docs.wxwidgets.org/trunk/ and please also see
 https://wiki.wxwidgets.org/ for user-contributed contents.
 
 And if you have any questions, you can join wxWidgets community using

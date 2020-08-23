@@ -20,9 +20,11 @@
 
 #if wxUSE_CAIRO
 
+#ifndef __WXGTK20__
 // keep cairo.h from defining dllimport as we're defining the symbols inside
 // the wx dll in order to load them dynamically.
 #define cairo_public
+#endif
 
 #include <cairo.h>
 #include <float.h>
@@ -63,7 +65,6 @@ using namespace std;
 // wxGraphicsPath implementation
 //-----------------------------------------------------------------------------
 
-#include <cairo.h>
 #ifdef __WXMSW__
 // TODO remove this dependency (gdiplus needs the macros)
 
@@ -1916,9 +1917,7 @@ wxCairoContext::wxCairoContext( wxGraphicsRenderer* renderer, const wxPrinterDC&
     // Since we switched from MM_ANISOTROPIC to MM_TEXT mapping mode
     // we have to apply rescaled DC's device origin to Cairo context.
     ApplyTransformFromDC(dc, Apply_scaled_dev_origin);
-#endif //  __WXMSW__
-
-#ifdef __WXGTK20__
+#elif defined(__WXGTK20__)
     const wxDCImpl *impl = dc.GetImpl();
     cairo_t* cr = static_cast<cairo_t*>(impl->GetCairoContext());
     Init(cr ? cairo_reference(cr) : NULL);
@@ -1929,6 +1928,9 @@ wxCairoContext::wxCairoContext( wxGraphicsRenderer* renderer, const wxPrinterDC&
 
     // Transfer transformation settings from source DC to Cairo context.
     ApplyTransformFromDC(dc);
+#else
+    #warning "Constructing wxCairoContext from wxPrinterDC not implemented."
+    wxUnusedVar(dc);
 #endif
 }
 #endif
@@ -2864,7 +2866,7 @@ void wxCairoContext::GetTextExtent( const wxString &str, wxDouble *width, wxDoub
             fe.height = fe.ascent + fe.descent;
         }
 
-        if (height)
+        if (height && !str.empty())
             *height = fe.height;
         if ( descent )
             *descent = fe.descent;

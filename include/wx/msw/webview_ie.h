@@ -55,7 +55,7 @@ public:
            const wxPoint& pos = wxDefaultPosition,
            const wxSize& size = wxDefaultSize,
            long style = 0,
-           const wxString& name = wxWebViewNameStr)
+           const wxString& name = wxASCII_STR(wxWebViewNameStr))
    {
        Create(parent, id, url, pos, size, style, name);
    }
@@ -68,7 +68,7 @@ public:
            const wxPoint& pos = wxDefaultPosition,
            const wxSize& size = wxDefaultSize,
            long style = 0,
-           const wxString& name = wxWebViewNameStr) wxOVERRIDE;
+           const wxString& name = wxASCII_STR(wxWebViewNameStr)) wxOVERRIDE;
 
     virtual void LoadURL(const wxString& url) wxOVERRIDE;
     virtual void LoadHistoryItem(wxSharedPtr<wxWebViewHistoryItem> item) wxOVERRIDE;
@@ -98,7 +98,9 @@ public:
     virtual void Print() wxOVERRIDE;
 
     virtual wxWebViewZoom GetZoom() const wxOVERRIDE;
+    virtual float GetZoomFactor() const wxOVERRIDE;
     virtual void SetZoom(wxWebViewZoom zoom) wxOVERRIDE;
+    virtual void SetZoomFactor(float zoom) wxOVERRIDE;
 
     //Clipboard functions
     virtual bool CanCut() const wxOVERRIDE;
@@ -146,7 +148,9 @@ public:
     void SetIETextZoom(wxWebViewZoom level);
 
     wxWebViewZoom GetIEOpticalZoom() const;
+    int GetIEOpticalZoomFactor() const;
     void SetIEOpticalZoom(wxWebViewZoom level);
+    void SetIEOpticalZoomFactor(int zoom);
 
     void onActiveXEvent(wxActiveXEvent& evt);
     void onEraseBg(wxEraseEvent&) {}
@@ -186,7 +190,7 @@ public:
                               const wxPoint& pos = wxDefaultPosition,
                               const wxSize& size = wxDefaultSize,
                               long style = 0,
-                              const wxString& name = wxWebViewNameStr) wxOVERRIDE
+                              const wxString& name = wxASCII_STR(wxWebViewNameStr)) wxOVERRIDE
     { return new wxWebViewIE(parent, id, url, pos, size, style, name); }
 };
 

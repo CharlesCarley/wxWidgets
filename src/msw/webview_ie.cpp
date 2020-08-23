@@ -40,6 +40,7 @@ namespace {
 
 DEFINE_GUID(wxIID_IInternetProtocolRoot,0x79eac9e3,0xbaf9,0x11ce,0x8c,0x82,0,0xaa,0,0x4b,0xa9,0xb);
 DEFINE_GUID(wxIID_IInternetProtocol,0x79eac9e4,0xbaf9,0x11ce,0x8c,0x82,0,0xaa,0,0x4b,0xa9,0xb);
+DEFINE_GUID(wxIID_IInternetProtocolInfo,0x79eac9ec,0xbaf9,0x11ce,0x8c, 0x82,0,0xaa,0,0x4b,0xa9,0x0b);
 DEFINE_GUID(wxIID_IDocHostUIHandler, 0xbd3f23c0, 0xd43e, 0x11cf, 0x89, 0x3b, 0x00, 0xaa, 0x00, 0xbd, 0xce, 0x1a);
 DEFINE_GUID(wxIID_IHTMLElement2,0x3050f434,0x98b5,0x11cf,0xbb,0x82,0,0xaa,0,0xbd,0xce,0x0b);
 DEFINE_GUID(wxIID_IMarkupServices,0x3050f4a0,0x98b5,0x11cf,0xbb,0x82,0,0xaa,0,0xbd,0xce,0x0b);
@@ -284,6 +285,44 @@ wxWebViewZoom wxWebViewIE::GetZoom() const
 
 }
 
+float wxWebViewIE::GetZoomFactor() const
+{
+    wxWebViewZoom level = wxWEBVIEW_ZOOM_MEDIUM;
+    float zoomFactor = 1.0;
+
+    if (m_impl->m_zoomType == wxWEBVIEW_ZOOM_TYPE_LAYOUT)
+    {
+        zoomFactor = (float)GetIEOpticalZoomFactor();
+        zoomFactor /= 100;
+    }
+    else if (m_impl->m_zoomType == wxWEBVIEW_ZOOM_TYPE_TEXT)
+    {
+        level = GetIETextZoom();
+        switch(level)
+        {
+            case wxWEBVIEW_ZOOM_TINY:
+                zoomFactor = 0.6f;
+                break;
+            case wxWEBVIEW_ZOOM_SMALL:
+                zoomFactor = 0.8f;
+                break;
+            case wxWEBVIEW_ZOOM_MEDIUM:
+                zoomFactor = 1.0f;
+                break;
+            case wxWEBVIEW_ZOOM_LARGE:
+                zoomFactor = 1.3f;
+                break;
+            case wxWEBVIEW_ZOOM_LARGEST:
+                zoomFactor = 1.6f;
+                break;
+            default:
+                wxFAIL;
+        }
+    }
+
+    return zoomFactor;
+}
+
 void wxWebViewIE::SetZoom(wxWebViewZoom zoom)
 {
     switch( m_impl->m_zoomType )
@@ -296,6 +335,41 @@ void wxWebViewIE::SetZoom(wxWebViewZoom zoom)
             break;
         default:
             wxFAIL;
+    }
+}
+
+void wxWebViewIE::SetZoomFactor(float zoom)
+{
+    wxWebViewZoom level = wxWEBVIEW_ZOOM_MEDIUM;
+
+    if (m_impl->m_zoomType == wxWEBVIEW_ZOOM_TYPE_LAYOUT)
+    {
+        SetIEOpticalZoomFactor(zoom * 100);
+    }
+    else if (m_impl->m_zoomType == wxWEBVIEW_ZOOM_TYPE_TEXT)
+    {
+        //We make a somewhat arbitray map here, taken from values used by webkit
+        if (zoom <= 65)
+        {
+            level = wxWEBVIEW_ZOOM_TINY;
+        }
+        else if (zoom > 65 && zoom <= 90)
+        {
+            level = wxWEBVIEW_ZOOM_SMALL;
+        }
+        else if (zoom > 90 && zoom <= 115)
+        {
+            level = wxWEBVIEW_ZOOM_MEDIUM;
+        }
+        else if (zoom > 115 && zoom <= 145)
+        {
+            level = wxWEBVIEW_ZOOM_LARGE;
+        }
+        else
+        {
+            level = wxWEBVIEW_ZOOM_LARGEST;
+        }
+        SetIETextZoom(level);
     }
 }
 
@@ -338,33 +412,40 @@ wxWebViewZoom wxWebViewIE::GetIETextZoom() const
 
 void wxWebViewIE::SetIEOpticalZoom(wxWebViewZoom level)
 {
-    //We do not use OLECMDID_OPTICAL_GETZOOMRANGE as the docs say the range
-    //is 10 to 1000 so the check is unnecessary
-    VARIANT zoomVariant;
-    VariantInit (&zoomVariant);
-    V_VT(&zoomVariant) = VT_I4;
+    int zoom = 100;
 
     //We make a somewhat arbitray map here, taken from values used by webkit
     switch(level)
     {
         case wxWEBVIEW_ZOOM_TINY:
-            V_I4(&zoomVariant) = 60;
+            zoom = 60;
             break;
         case wxWEBVIEW_ZOOM_SMALL:
-            V_I4(&zoomVariant) = 80;
+            zoom = 80;
             break;
         case wxWEBVIEW_ZOOM_MEDIUM:
-            V_I4(&zoomVariant) = 100;
+            zoom = 100;
             break;
         case wxWEBVIEW_ZOOM_LARGE:
-            V_I4(&zoomVariant) = 130;
+            zoom = 130;
             break;
         case wxWEBVIEW_ZOOM_LARGEST:
-            V_I4(&zoomVariant) = 160;
+            zoom = 160;
             break;
         default:
             wxFAIL;
     }
+    SetIEOpticalZoomFactor(zoom);
+}
+
+void wxWebViewIE::SetIEOpticalZoomFactor(int zoom)
+{
+    //We do not use OLECMDID_OPTICAL_GETZOOMRANGE as the docs say the range
+    //is 10 to 1000 so the check is unnecessary
+    VARIANT zoomVariant;
+    VariantInit (&zoomVariant);
+    V_VT(&zoomVariant) = VT_I4;
+    V_I4(&zoomVariant) = zoom;
 
 #if wxDEBUG_LEVEL
     HRESULT result =
@@ -378,19 +459,7 @@ void wxWebViewIE::SetIEOpticalZoom(wxWebViewZoom level)
 
 wxWebViewZoom wxWebViewIE::GetIEOpticalZoom() const
 {
-    VARIANT zoomVariant;
-    VariantInit (&zoomVariant);
-    V_VT(&zoomVariant) = VT_I4;
-
-#if wxDEBUG_LEVEL
-    HRESULT result =
-#endif
-            m_impl->m_webBrowser->ExecWB((OLECMDID)63 /*OLECMDID_OPTICAL_ZOOM*/,
-                                         OLECMDEXECOPT_DODEFAULT, NULL,
-                                         &zoomVariant);
-    wxASSERT(result == S_OK);
-
-    const int zoom = V_I4(&zoomVariant);
+    const int zoom = GetIEOpticalZoomFactor();
 
     //We make a somewhat arbitray map here, taken from values used by webkit
     if (zoom <= 65)
@@ -413,6 +482,25 @@ wxWebViewZoom wxWebViewIE::GetIEOpticalZoom() const
     {
         return wxWEBVIEW_ZOOM_LARGEST;
     }
+}
+
+int wxWebViewIE::GetIEOpticalZoomFactor() const
+{
+    VARIANT zoomVariant;
+    VariantInit (&zoomVariant);
+    V_VT(&zoomVariant) = VT_I4;
+
+#if wxDEBUG_LEVEL
+    HRESULT result =
+#endif
+            m_impl->m_webBrowser->ExecWB((OLECMDID)63 /*OLECMDID_OPTICAL_ZOOM*/,
+                                         OLECMDEXECOPT_DODEFAULT, NULL,
+                                         &zoomVariant);
+    wxASSERT(result == S_OK);
+
+    const int zoom = V_I4(&zoomVariant);
+
+    return zoom;
 }
 
 void wxWebViewIE::SetZoomType(wxWebViewZoomType type)
@@ -989,7 +1077,7 @@ void wxWebViewIE::RegisterHandler(wxSharedPtr<wxWebViewHandler> handler)
         HRESULT res = (*pfnCoInternetGetSession)(0, &session, 0);
         if(FAILED(res))
         {
-            wxFAIL_MSG("Could not retrive internet session");
+            wxFAIL_MSG("Could not retrieve internet session");
         }
 
         HRESULT hr = session->RegisterNameSpace(cf, CLSID_FileProtocol,
@@ -1528,13 +1616,61 @@ VirtualProtocol::VirtualProtocol(wxSharedPtr<wxWebViewHandler> handler)
     m_handler = handler;
 }
 
-BEGIN_IID_TABLE(VirtualProtocol)
-    ADD_IID(Unknown)
-    ADD_RAW_IID(wxIID_IInternetProtocolRoot)
-    ADD_RAW_IID(wxIID_IInternetProtocol)
-END_IID_TABLE;
+STDMETHODIMP VirtualProtocol::QueryInterface(REFIID riid, void **ppv)
+{
+    wxLogQueryInterface(wxT("VirtualProtocol"), riid);
 
-IMPLEMENT_IUNKNOWN_METHODS(VirtualProtocol)
+    if(riid == IID_IUnknown)
+    {
+        wxIInternetProtocolRoot *InternetProtocolRoot = this;
+        IUnknown *Unknown = InternetProtocolRoot;
+        *ppv = Unknown;
+        AddRef();
+        return S_OK;
+    }
+    if(riid == wxIID_IInternetProtocolRoot)
+    {
+        wxIInternetProtocolRoot *InternetProtocolRoot = this;
+        *ppv = InternetProtocolRoot;
+        AddRef();
+        return S_OK;
+    }
+    if(riid == wxIID_IInternetProtocol)
+    {
+        wxIInternetProtocol *InternetProtocol = this;
+        *ppv = InternetProtocol;
+        AddRef();
+        return S_OK;
+    }
+    if(riid == wxIID_IInternetProtocolInfo)
+    {
+        wxIInternetProtocolInfo *InternetProtocolInfo = this;
+        *ppv = InternetProtocolInfo;
+        AddRef();
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return (HRESULT) E_NOINTERFACE;
+}
+
+STDMETHODIMP_(ULONG) VirtualProtocol::AddRef()
+{
+    wxLogAddRef(wxT("VirtualProtocol"), m_cRef);
+    return ++m_cRef;
+}
+
+STDMETHODIMP_(ULONG) VirtualProtocol::Release()
+{
+    wxLogRelease(wxT("VirtualProtocol"), m_cRef);
+    if( --m_cRef == wxAutoULong(0))
+    {
+        delete this;
+        return 0;
+    }
+    else
+        return m_cRef;
+}
 
 HRESULT STDMETHODCALLTYPE VirtualProtocol::Start(LPCWSTR szUrl, wxIInternetProtocolSink *pOIProtSink,
                                wxIInternetBindInfo *pOIBindInfo, DWORD grfPI,
@@ -1600,6 +1736,82 @@ HRESULT STDMETHODCALLTYPE VirtualProtocol::Read(void *pv, ULONG cb, ULONG *pcbRe
         wxFAIL;
         return INET_E_DOWNLOAD_FAILURE;
     }
+}
+
+HRESULT STDMETHODCALLTYPE VirtualProtocol::CombineUrl(
+        LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl,
+        DWORD dwCombineFlags, LPWSTR pwzResult,
+        DWORD cchResult, DWORD *pcchResult,
+        DWORD dwReserved)
+{
+    wxUnusedVar(pwzBaseUrl);
+    wxUnusedVar(pwzRelativeUrl);
+    wxUnusedVar(dwCombineFlags);
+    wxUnusedVar(pwzResult);
+    wxUnusedVar(cchResult);
+    wxUnusedVar(pcchResult);
+    wxUnusedVar(dwReserved);
+
+    return INET_E_DEFAULT_ACTION;
+}
+
+HRESULT STDMETHODCALLTYPE VirtualProtocol::ParseUrl(
+        LPCWSTR pwzUrl, wxPARSEACTION ParseAction,
+        DWORD dwParseFlags, LPWSTR pwzResult,
+        DWORD cchResult, DWORD *pcchResult,
+        DWORD dwReserved)
+{
+    wxUnusedVar(pwzUrl);
+    wxUnusedVar(dwParseFlags);
+    wxUnusedVar(dwReserved);
+
+    const size_t secLen = m_handler->GetSecurityURL().length();
+    if ( secLen > 0 )
+    {
+        switch ( ParseAction )
+        {
+            case wxPARSE_SECURITY_URL:
+            case wxPARSE_SECURITY_DOMAIN:
+            {
+                if ( cchResult < secLen )
+                    return S_FALSE;
+                wcscpy(pwzResult, m_handler->GetSecurityURL().wc_str());
+                *pcchResult = secLen;
+                return S_OK;
+            }
+        }
+    }
+
+    return INET_E_DEFAULT_ACTION;
+}
+
+HRESULT STDMETHODCALLTYPE VirtualProtocol::CompareUrl(
+        LPCWSTR pwzUrl1,
+        LPCWSTR pwzUrl2,
+        DWORD dwCompareFlags)
+{
+    wxUnusedVar(pwzUrl1);
+    wxUnusedVar(pwzUrl2);
+    wxUnusedVar(dwCompareFlags);
+
+    return INET_E_DEFAULT_ACTION;
+}
+
+HRESULT STDMETHODCALLTYPE VirtualProtocol::QueryInfo(
+        LPCWSTR pwzUrl, wxQUERYOPTION OueryOption,
+        DWORD dwQueryFlags, LPVOID pBuffer,
+        DWORD cbBuffer, DWORD *pcbBuf,
+        DWORD dwReserved)
+{
+    wxUnusedVar(pwzUrl);
+    wxUnusedVar(OueryOption);
+    wxUnusedVar(dwQueryFlags);
+    wxUnusedVar(pBuffer);
+    wxUnusedVar(cbBuffer);
+    wxUnusedVar(pcbBuf);
+    wxUnusedVar(dwReserved);
+
+    return INET_E_DEFAULT_ACTION;
 }
 
 BEGIN_IID_TABLE(ClassFactory)
@@ -1672,7 +1884,8 @@ HRESULT wxSTDCALL DocHostUIHandler::GetHostInfo(DOCHOSTUIINFO *pInfo)
     // redirected.
     pInfo->dwFlags |= DOCHOSTUIFLAG_NO3DBORDER |
                       DOCHOSTUIFLAG_THEME |
-                      DOCHOSTUIFLAG_ENABLE_REDIRECT_NOTIFICATION;
+                      DOCHOSTUIFLAG_ENABLE_REDIRECT_NOTIFICATION |
+                      DOCHOSTUIFLAG_DPI_AWARE;
     return S_OK;
 }
 

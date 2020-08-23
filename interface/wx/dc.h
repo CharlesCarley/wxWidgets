@@ -164,7 +164,7 @@ struct wxFontMetrics
     In general wxDC methods don't support alpha transparency and the alpha
     component of wxColour is simply ignored and you need to use wxGraphicsContext
     for full transparency support. There are, however, a few exceptions: first,
-    under OS X and GTK+ 3 colours with alpha channel are supported in all the normal
+    under macOS and GTK+ 3 colours with alpha channel are supported in all the normal
     wxDC-derived classes as they use wxGraphicsContext internally. Second,
     under all platforms wxSVGFileDC also fully supports alpha channel. In both
     of these cases the instances of wxPen or wxBrush that are built from
@@ -173,7 +173,7 @@ struct wxFontMetrics
 
     @section dc_transform_support Support for Transformation Matrix
 
-    On some platforms (currently under MSW, GTK+ 3, OS X) wxDC has support for
+    On some platforms (currently under MSW, GTK+ 3, macOS) wxDC has support for
     applying an arbitrary affine transformation matrix to its coordinate system
     (since 3.1.1 this feature is also supported by wxGCDC in all ports).
     Call CanUseTransformMatrix() to check if this support is available and then
@@ -305,7 +305,7 @@ public:
 
     /**
         Draw a bitmap on the device context at the specified point. If
-        @a transparent is @true and the bitmap has a transparency mask, the
+        @a useMask is @true and the bitmap has a transparency mask, the
         bitmap will be drawn transparently.
 
         When drawing a mono-bitmap, the current text foreground colour will be
@@ -892,6 +892,12 @@ public:
         used for the text extent calculation, otherwise the currently selected
         font is used.
 
+        If @a string is empty, its horizontal extent is 0 but, for convenience
+        when using this function for allocating enough space for a possibly
+        multi-line string, its vertical extent is the same as the height of an
+        empty line of text. Please note that this behaviour differs from that
+        of GetTextExtent().
+
         @note This function works with both single-line and multi-line strings.
 
         @beginWxPerlOnly
@@ -954,6 +960,8 @@ public:
         used for the text extent calculation. Otherwise the currently selected
         font is.
 
+        If @a string is empty, its extent is 0 in both directions, as expected.
+
         @note This function only works with single-line strings.
 
         @beginWxPerlOnly
@@ -989,7 +997,7 @@ public:
     //@{
 
     /**
-        Returns the current background mode: @c wxPENSTYLE_SOLID or @c wxPENSTYLE_TRANSPARENT.
+        Returns the current background mode: @c wxBRUSHSTYLE_SOLID or @c wxBRUSHSTYLE_TRANSPARENT.
 
         @see SetBackgroundMode()
     */
@@ -1029,10 +1037,15 @@ public:
     const wxColour& GetTextForeground() const;
 
     /**
-        @a mode may be one of @c wxPENSTYLE_SOLID and @c wxPENSTYLE_TRANSPARENT.
+        Change the current background mode.
 
         This setting determines whether text will be drawn with a background
         colour or not.
+
+        Default is @c wxBRUSHSTYLE_TRANSPARENT, i.e. text background is not
+        drawn.
+
+        @param mode one of @c wxBRUSHSTYLE_SOLID and @c wxBRUSHSTYLE_TRANSPARENT.
     */
     void SetBackgroundMode(int mode);
 
@@ -1640,7 +1653,7 @@ public:
        context, if this wxDC has something that could be thought of in that
        way.  (Not all of them do.)
 
-       For example, on Windows the return value is an HDC, on OS X it is a
+       For example, on Windows the return value is an HDC, on macOS it is a
        CGContextRef and on wxGTK it will be a GdkDrawable.  If the DC is a
        wxGCDC then the return value will be the value returned from
        wxGraphicsContext::GetNativeContext.  A value of NULL is returned if
@@ -1687,6 +1700,21 @@ public:
     void GetLogicalOrigin(wxCoord *x, wxCoord *y) const;
     wxPoint GetLogicalOrigin() const;
     //@}
+
+    /**
+       If supported by the platform and the @a wxDC implementation, this method
+       will return the @a wxGraphicsContext associated with the DC. Otherwise
+       @NULL is returned.
+    */
+    virtual wxGraphicsContext* GetGraphicsContext() const;
+
+    /**
+       Associate a wxGraphicsContext with the DC. Ignored if not supported by
+       the specific @a wxDC implementation. It is unlikely that this will need to
+       be used in application code.
+    */
+    virtual void SetGraphicsContext( wxGraphicsContext* ctx );
+
 };
 
 
@@ -1957,7 +1985,8 @@ public:
         @param dc
             The DC where the mode must be temporary set.
         @param mode
-            The background mode to set.
+            The background mode to set, one of @c wxBRUSHSTYLE_SOLID or @c
+            wxBRUSHSTYLE_TRANSPARENT.
     */
     wxDCBgModeChanger(wxDC& dc, int mode);
 

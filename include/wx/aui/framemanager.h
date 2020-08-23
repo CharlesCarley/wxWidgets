@@ -414,6 +414,9 @@ public:
     void SetFlags(unsigned int flags);
     unsigned int GetFlags() const;
 
+    static bool AlwaysUsesLiveResize();
+    bool HasLiveResize() const;
+
     void SetManagedWindow(wxWindow* managedWnd);
     wxWindow* GetManagedWindow() const;
 
@@ -553,6 +556,7 @@ public:
 protected:
 
     // protected events
+    void OnDestroy(wxWindowDestroyEvent& evt);
     void OnPaint(wxPaintEvent& evt);
     void OnEraseBackground(wxEraseEvent& evt);
     void OnSize(wxSizeEvent& evt);

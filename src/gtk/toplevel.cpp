@@ -25,6 +25,7 @@
 
 #ifndef WX_PRECOMP
     #include "wx/frame.h"
+    #include "wx/app.h"     // GetAppDisplayName()
     #include "wx/icon.h"
     #include "wx/log.h"
 #endif
@@ -34,6 +35,7 @@
 
 #include "wx/gtk/private.h"
 #include "wx/gtk/private/gtk3-compat.h"
+#include "wx/gtk/private/stylecontext.h"
 #include "wx/gtk/private/win_gtk.h"
 
 #ifdef GDK_WINDOWING_X11
@@ -55,6 +57,7 @@ static wxTopLevelWindowGTK *g_activeFrame = NULL;
 
 extern wxCursor g_globalCursor;
 extern wxCursor g_busyCursor;
+extern bool g_inSizeAllocate;
 
 #ifdef GDK_WINDOWING_X11
 // Whether _NET_REQUEST_FRAME_EXTENTS support is working
@@ -238,6 +241,9 @@ size_allocate(GtkWidget*, GtkAllocation* alloc, wxTopLevelWindowGTK* win)
     if (win->m_clientWidth  != alloc->width ||
         win->m_clientHeight != alloc->height)
     {
+        const bool save_inSizeAllocate = g_inSizeAllocate;
+        g_inSizeAllocate = true;
+
         win->m_clientWidth  = alloc->width;
         win->m_clientHeight = alloc->height;
 
@@ -270,6 +276,8 @@ size_allocate(GtkWidget*, GtkAllocation* alloc, wxTopLevelWindowGTK* win)
             win->HandleWindowEvent(event);
         }
         // else the window is currently unmapped, don't generate size events
+
+        g_inSizeAllocate = save_inSizeAllocate;
     }
 }
 }
@@ -629,6 +637,11 @@ bool wxTopLevelWindowGTK::Create( wxWindow *parent,
 
     m_title = title;
 
+#ifndef __WXGTK4__
+    // Gnome uses class as display name
+    gdk_set_program_class(wxTheApp->GetAppDisplayName().utf8_str());
+#endif
+
     // NB: m_widget may be !=NULL if it was created by derived class' Create,
     //     e.g. in wxTaskBarIconAreaGTK
     if (m_widget == NULL)
@@ -836,7 +849,13 @@ bool wxTopLevelWindowGTK::Create( wxWindow *parent,
         gtk_widget_set_size_request(m_widget, w, h);
     }
 
-    g_signal_connect(gtk_settings_get_default(), "notify::gtk-theme-name",
+    // Note that we need to connect after this signal in order to let the
+    // normal g_signal_connect() in wxSystemSettings code to run before our
+    // handler: this ensures that system settings cache is cleared before the
+    // user-defined wxSysColourChangedEvent handlers using wxSystemSettings
+    // methods are executed, which is important as otherwise they would use the
+    // old colours etc.
+    g_signal_connect_after(gtk_settings_get_default(), "notify::gtk-theme-name",
         G_CALLBACK(notify_gtk_theme_name), this);
 
     return true;
@@ -1808,4 +1827,13 @@ bool wxTopLevelWindowGTK::CanSetTransparent()
     return XQueryExtension(gdk_x11_get_default_xdisplay (),
                            "Composite", &opcode, &event, &error);
 #endif
+}
+
+wxVisualAttributes wxTopLevelWindowGTK::GetDefaultAttributes() const
+{
+    wxVisualAttributes attrs(GetClassDefaultAttributes());
+#ifdef __WXGTK3__
+    wxGtkStyleContext().AddWindow().Bg(attrs.colBg);
+#endif
+    return attrs;
 }

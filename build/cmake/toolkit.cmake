@@ -12,6 +12,10 @@ wx_option(wxUSE_GUI "Use GUI" ON)
 
 if(CMAKE_OSX_SYSROOT MATCHES iphoneos)
     set(IPHONE ON)
+
+    # workaround a bug where try_compile (and functions using it,
+    # like find_package, check_c_source_compiles) fails
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 endif()
 
 if(WIN32)
@@ -27,7 +31,7 @@ elseif(APPLE)
     set(wxTOOLKIT_OPTIONS osx_cocoa gtk2 gtk3 gtk4 qt)
     set(wxPLATFORM OSX)
 elseif(UNIX)
-    set(wxDEFAULT_TOOLKIT gtk2)
+    set(wxDEFAULT_TOOLKIT gtk3)
     set(wxTOOLKIT_OPTIONS gtk2 gtk3 gtk4 motif qt)
     set(wxPLATFORM UNIX)
 else()

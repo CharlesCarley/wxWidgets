@@ -20,7 +20,6 @@
 #include "wx/filefn.h"
 #include "wx/hashmap.h"
 #include "wx/versioninfo.h"
-#include "wx/windowid.h"
 #include "wx/meta/implicitconversion.h"
 
 #if wxUSE_GUI
@@ -155,7 +154,7 @@ WXDLLIMPEXP_BASE bool wxIsPlatformLittleEndian();
 WXDLLIMPEXP_BASE bool wxIsPlatform64Bit();
 
 #ifdef __LINUX__
-// Get linux-distro informations
+// Get linux-distro information
 WXDLLIMPEXP_BASE wxLinuxDistributionInfo wxGetLinuxDistributionInfo();
 #endif
 
@@ -179,7 +178,7 @@ WXDLLIMPEXP_CORE bool wxGetKeyState(wxKeyCode key);
 // in wxMSW.
 WXDLLIMPEXP_CORE bool wxSetDetectableAutoRepeat( bool flag );
 
-// Returns the current state of the mouse position, buttons and modifers
+// Returns the current state of the mouse position, buttons and modifiers
 WXDLLIMPEXP_CORE wxMouseState wxGetMouseState();
 
 #endif // wxUSE_GUI
@@ -803,7 +802,7 @@ inline struct _XDisplay *wxGetX11Display()
 // wxYield(): these functions are obsolete, please use wxApp methods instead!
 // ----------------------------------------------------------------------------
 
-// avoid redeclaring this function here if it had been already declated by
+// avoid redeclaring this function here if it had been already declared by
 // wx/app.h, this results in warnings from g++ with -Wredundant-decls
 #ifndef wx_YIELD_DECLARED
 #define wx_YIELD_DECLARED

@@ -84,11 +84,13 @@ Microsoft Visual C++ Compilation       {#msw_build_msvs}
 
    to build a release version or
 
-        > nmake /f makefile.vc BUILD=release SHARED=1
+        > nmake /f makefile.vc BUILD=release SHARED=1 TARGET_CPU=X86
 
-   to build a release DLL version. Finally, you can also add
-   `TARGET_CPU=X64` to nmake command line to build Win64 versions
-   (this only works if you are using a 64 bit compiler, of course).
+   to build a 32 bit release DLL version from an x86 command prompt, or
+
+        > nmake /f makefile.vc BUILD=release SHARED=1 TARGET_CPU=X64
+
+   to build a 64 bit release DLL version from an x64 command prompt.
 
    See "Configuring the Build" for more information about the
    additional parameters that can be specified on the command line.
@@ -299,7 +301,7 @@ debug mode, edit makefile.bcc and change /aa to /Tpe in link commands.
 Using the Debugger and IDE in BDS or Turbo Explorer
 ---------------------------------------------------
 
-Doubleclick / open \%WXWIN\%\samples\minimal\borland.bdsproj. The current version
+Double-click / open \%WXWIN\%\samples\minimal\borland.bdsproj. The current version
 is to be used with a dynamic build of wxWidgets-made by running
 make -f Makefile.bcc -DBUILD=debug -DSHARED=1
 in wxWidgets\build\msw. You also need the `wxWidgets\lib\bcc_dll`
@@ -529,8 +531,15 @@ Building Applications Using wxWidgets  {#msw_build_apps}
 =====================================
 
 If you use MSVS 2010 or later IDE for building your project, simply add
-`wxwidgets.props` property sheet to (all) your project(s) using wxWidgets.
-You don't need to do anything else.
+`wxwidgets.props` property sheet to (all) your project(s) using wxWidgets
+by using "View|Property Manager" menu item to open the property manager
+window and then selecting "Add Existing Property Sheet..." from the context
+menu in this window.
+
+If you've created a new empty project (i.e. chose "Empty Project" in the
+"Create a new project" window shown by MSVS rather than "Windows Desktop"),
+you need to change "Linker|System|SubSystem" in the project properties to
+"Windows", from the default "Console". You don't need to do anything else.
 
 If you want to use CMake for building your project, please see
 @ref overview_cmake.
@@ -596,7 +605,7 @@ application.
 Advanced Library Configurations        {#msw_advanced}
 ===============================
 Build instructions to less common library configurations using different UI
-backends are avaiable here.
+backends are available here.
 
 @subpage plat_msw_msys2 "Building with Win32 MSys2 backend"
 

@@ -35,11 +35,11 @@ library:
 @itemdef{wxUSE_STD_IOSTREAM, Standard C++ classes are used instead of or in
     addition to wx stream classes.}
 @itemdef{wxUSE_UNICODE, Compiled with Unicode support (default in wxWidgets
-    3.0, non-Unicode build will be deprecated in the future).}
+    3.0, non-Unicode build is deprecated and will be removed in the future).}
 @itemdef{wxUSE_UNICODE_WCHAR, wxString uses wchar_t buffer for internal storage
-    (default under MSW).}
-@itemdef{wxUSE_UNICODE_UTF8, wxString uses UTF-8 for internal storage (default
-    under Unix and Mac systems).}
+    (default).}
+@itemdef{wxUSE_UNICODE_UTF8, wxString uses UTF-8 for internal storage (mostly
+    useful for wxGTK where UTF-8 is used by the underlying toolkit).}
 @itemdef{wxUSE_UTF8_LOCALE_ONLY, Library supports running only under UTF-8 (and
     C) locale. This eliminates the code necessary for conversions from the
     other locales and reduces the library size; useful for embedded systems.}
@@ -169,7 +169,8 @@ library:
 @itemdef{wxUSE_MDI_ARCHITECTURE, Use MDI-based document-view classes.}
 @itemdef{wxUSE_MEDIACTRL, Use wxMediaCtrl.}
 @itemdef{wxUSE_MEMORY_TRACING, Use wxWidgets memory leak detection, not recommended if using another memory debugging tool.}
-@itemdef{wxUSE_MENUS, Use wxMenu and related classes.}
+@itemdef{wxUSE_MENUS, Use wxMenu and wxMenuItem.}
+@itemdef{wxUSE_MENUBAR, Use wxMenubar.}
 @itemdef{wxUSE_METAFILE, Use wxMetaFile and related classes.}
 @itemdef{wxUSE_MIMETYPE, Use wxFileType class.}
 @itemdef{wxUSE_MINIFRAME, Use wxMiniFrame class.}

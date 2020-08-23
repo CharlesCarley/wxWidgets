@@ -85,6 +85,30 @@ protected:
         CHECK( ++it == selected.end() );
     }
 
+    // Or specified ranges.
+    struct RowRange
+    {
+        RowRange(int top, int bottom) : top(top), bottom(bottom) { }
+
+        int top, bottom;
+    };
+
+    typedef wxVector<RowRange> RowRanges;
+
+    void CheckRowSelection(const RowRanges& ranges)
+    {
+        const wxGridBlockCoordsVector sel = m_grid->GetSelectedRowBlocks();
+        REQUIRE( sel.size() == ranges.size() );
+
+        for ( size_t n = 0; n < sel.size(); ++n )
+        {
+            INFO("n = " << n);
+
+            const RowRange& r = ranges[n];
+            CHECK( sel[n] == wxGridBlockCoords(r.top, 0, r.bottom, 1) );
+        }
+    }
+
     TestableGrid *m_grid;
 
     wxDECLARE_NO_COPY_CLASS(GridTestCase);
@@ -145,37 +169,11 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")
 
     sim.Text("abab");
 
-    // We need to wait until the editor is really shown under GTK, consider
-    // that it happens once it gets focus.
-#ifdef __WXGTK__
-    for ( wxStopWatch sw; wxWindow::FindFocus() == m_grid; )
-    {
-        if ( sw.Time() > 250 )
-        {
-            WARN("Editor control not shown until timeout expiration");
-            break;
-        }
-
-        wxYield();
-    }
-#endif // __WXGTK__
+    wxYield();
 
     sim.Char(WXK_RETURN);
 
     wxYield();
-
-#ifdef __WXGTK__
-    for ( wxStopWatch sw; wxWindow::FindFocus() != m_grid; )
-    {
-        if ( sw.Time() > 250 )
-        {
-            WARN("Editor control not hidden until timeout expiration");
-            break;
-        }
-
-        wxYield();
-    }
-#endif // __WXGTK__
 
     CHECK(m_grid->GetCellValue(1, 1) == "abab");
 
@@ -388,10 +386,15 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     // TODO on OSX resizing interactively works, but not automated
     // Grid could not pass the test under GTK, OSX, and Universal.
     // So there may has bug in Grid implementation
-#if wxUSE_UIACTIONSIMULATOR && !defined(__WXGTK__) && !defined(__WXOSX__) \
-&& !defined(__WXUNIVERSAL__)
+#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__) && !defined(__WXUNIVERSAL__)
     if ( !EnableUITests() )
         return;
+
+#ifdef __WXGTK20__
+    // Works locally, but not when run on Travis CI.
+    if ( IsAutomaticTest() )
+        return;
+#endif
 
     EventCounter colsize(m_grid, wxEVT_GRID_COL_SIZE);
     EventCounter rowsize(m_grid, wxEVT_GRID_ROW_SIZE);
@@ -400,7 +403,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
 
     wxPoint pt = m_grid->ClientToScreen(wxPoint(m_grid->GetRowLabelSize() +
                                         m_grid->GetColSize(0), 5));
-
     sim.MouseMove(pt);
     wxYield();
 
@@ -419,6 +421,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
                                         m_grid->GetRowSize(0)));
 
     sim.MouseDragDrop(pt.x, pt.y, pt.x, pt.y + 50);
+
     wxYield();
 
     CHECK(rowsize.GetCount() == 1);
@@ -557,11 +560,21 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Selection", "[grid]")
     CHECK(m_grid->IsInSelection(9, 1));
     CHECK(!m_grid->IsInSelection(3, 0));
 
-    m_grid->SelectRow(4);
+    m_grid->SelectRow(4, true /* add to selection */);
 
     CHECK(m_grid->IsInSelection(4, 0));
     CHECK(m_grid->IsInSelection(4, 1));
     CHECK(!m_grid->IsInSelection(3, 0));
+
+    // Check that deselecting a row does deselect the cells in it, but leaves
+    // the other ones selected.
+    m_grid->DeselectRow(4);
+    CHECK(!m_grid->IsInSelection(4, 0));
+    CHECK(!m_grid->IsInSelection(4, 1));
+    CHECK(m_grid->IsInSelection(0, 1));
+
+    m_grid->DeselectCol(1);
+    CHECK(!m_grid->IsInSelection(0, 1));
 }
 
 TEST_CASE_METHOD(GridTestCase, "Grid::SelectionRange", "[grid]")
@@ -575,7 +588,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::SelectionRange", "[grid]")
     REQUIRE( sel.begin() != sel.end() );
     CHECK( *sel.begin() == wxGridBlockCoords(1, 0, 3, 1) );
 
-#if __cplusplus >= 201103L || wxCHECK_VISUALC_VERSION(10)
+#if __cplusplus >= 201103L || wxCHECK_VISUALC_VERSION(11)
     m_grid->SelectBlock(4, 0, 7, 1, true);
     int index = 0;
     for ( const wxGridBlockCoords& block : m_grid->GetSelectedBlocks() )
@@ -922,6 +935,47 @@ TEST_CASE_METHOD(GridTestCase, "Grid::SelectionMode", "[grid]")
     CHECK(selectedRows.Count() == 1);
     CHECK(selectedRows[0] == 3);
 
+    // Check that overlapping selection blocks are handled correctly.
+    m_grid->ClearSelection();
+    m_grid->SelectBlock(0, 0, 4, 1);
+    m_grid->SelectBlock(2, 0, 6, 1, true /* add to selection */);
+    CHECK( m_grid->GetSelectedRows().size() == 7 );
+
+    CHECK( m_grid->GetSelectedColBlocks().empty() );
+
+    RowRanges rowRanges;
+    rowRanges.push_back(RowRange(0, 6));
+    CheckRowSelection(rowRanges);
+
+    m_grid->SelectBlock(6, 0, 8, 1);
+    m_grid->SelectBlock(1, 0, 4, 1, true /* add to selection */);
+    m_grid->SelectBlock(0, 0, 2, 1, true /* add to selection */);
+    CHECK( m_grid->GetSelectedRows().size() == 8 );
+
+    rowRanges.clear();
+    rowRanges.push_back(RowRange(0, 4));
+    rowRanges.push_back(RowRange(6, 8));
+    CheckRowSelection(rowRanges);
+
+    // Select all odd rows.
+    m_grid->ClearSelection();
+    rowRanges.clear();
+    for ( int i = 1; i < m_grid->GetNumberRows(); i += 2 )
+    {
+        m_grid->SelectBlock(i, 0, i, 1, true);
+        rowRanges.push_back(RowRange(i, i));
+    }
+
+    CheckRowSelection(rowRanges);
+
+    // Now select another block overlapping 2 of them and bordering 2 others.
+    m_grid->SelectBlock(2, 0, 6, 1, true);
+
+    rowRanges.clear();
+    rowRanges.push_back(RowRange(1, 7));
+    rowRanges.push_back(RowRange(9, 9));
+    CheckRowSelection(rowRanges);
+
     CHECK(m_grid->GetSelectionMode() == wxGrid::wxGridSelectRows);
 
 
@@ -930,9 +984,15 @@ TEST_CASE_METHOD(GridTestCase, "Grid::SelectionMode", "[grid]")
     m_grid->SetSelectionMode(wxGrid::wxGridSelectColumns);
     m_grid->SelectBlock(3, 1, 3, 1);
 
+    CHECK( m_grid->GetSelectedRowBlocks().empty() );
+
     wxArrayInt selectedCols = m_grid->GetSelectedCols();
     CHECK(selectedCols.Count() == 1);
     CHECK(selectedCols[0] == 1);
+
+    wxGridBlockCoordsVector colBlocks = m_grid->GetSelectedColBlocks();
+    CHECK( colBlocks.size() == 1 );
+    CHECK( colBlocks.at(0) == wxGridBlockCoords(0, 1, 9, 1) );
 
     CHECK(m_grid->GetSelectionMode() == wxGrid::wxGridSelectColumns);
 }
@@ -1072,15 +1132,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ReadOnly", "[grid]")
 
     m_grid->SetFocus();
 
-#ifdef __WXGTK__
-    // This is a mystery, but we somehow get WXK_RETURN generated by the
-    // previous test (Editable) in this one. In spite of wxYield() in that
-    // test, the key doesn't get dispatched there and we have to consume it
-    // here before setting the current grid cell, as getting WXK_RETURN later
-    // would move the selection down, to a non read-only cell.
-    wxYield();
-#endif // __WXGTK__
-
     m_grid->SetGridCursor(1, 1);
 
     CHECK(m_grid->IsCurrentCellReadOnly());
@@ -1161,9 +1212,15 @@ TEST_CASE_METHOD(GridTestCase, "Grid::WindowAsEditorControl", "[grid]")
 TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
 {
     // TODO this test currently works only under Windows unfortunately
-#if wxUSE_UIACTIONSIMULATOR && defined(__WXMSW__)
+#if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__))
     if ( !EnableUITests() )
         return;
+
+#ifdef __WXGTK20__
+    // Works locally, but not when run on Travis CI.
+    if ( IsAutomaticTest() )
+        return;
+#endif
 
     SECTION("Default") {}
     SECTION("Native header") { m_grid->UseNativeColHeader(); }
@@ -1206,9 +1263,15 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
 TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
 {
     // TODO this test currently works only under Windows unfortunately
-#if wxUSE_UIACTIONSIMULATOR && defined(__WXMSW__)
+#if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__))
     if ( !EnableUITests() )
         return;
+
+#ifdef __WXGTK20__
+    // Works locally, but not when run on Travis CI.
+    if ( IsAutomaticTest() )
+        return;
+#endif
 
     SECTION("Default") {}
     SECTION("Native header")

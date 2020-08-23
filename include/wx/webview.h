@@ -89,12 +89,16 @@ enum wxWebViewNavigationActionFlags
 class WXDLLIMPEXP_WEBVIEW wxWebViewHandler
 {
 public:
-    wxWebViewHandler(const wxString& scheme) : m_scheme(scheme) {}
+    wxWebViewHandler(const wxString& scheme)
+        : m_scheme(scheme), m_securityURL() {}
     virtual ~wxWebViewHandler() {}
     virtual wxString GetName() const { return m_scheme; }
     virtual wxFSFile* GetFile(const wxString &uri) = 0;
+    virtual void SetSecurityURL(const wxString& url) { m_securityURL = url; }
+    virtual wxString GetSecurityURL() const { return m_securityURL; }
 private:
     wxString m_scheme;
+    wxString m_securityURL;
 };
 
 extern WXDLLIMPEXP_DATA_WEBVIEW(const char) wxWebViewNameStr[];
@@ -110,11 +114,11 @@ public:
     virtual wxWebView* Create() = 0;
     virtual wxWebView* Create(wxWindow* parent,
                               wxWindowID id,
-                              const wxString& url = wxWebViewDefaultURLStr,
+                              const wxString& url = wxASCII_STR(wxWebViewDefaultURLStr),
                               const wxPoint& pos = wxDefaultPosition,
                               const wxSize& size = wxDefaultSize,
                               long style = 0,
-                              const wxString& name = wxWebViewNameStr) = 0;
+                              const wxString& name = wxASCII_STR(wxWebViewNameStr)) = 0;
 };
 
 WX_DECLARE_STRING_HASH_MAP(wxSharedPtr<wxWebViewFactory>, wxStringWebViewFactoryMap);
@@ -132,23 +136,23 @@ public:
 
     virtual bool Create(wxWindow* parent,
            wxWindowID id,
-           const wxString& url = wxWebViewDefaultURLStr,
+           const wxString& url = wxASCII_STR(wxWebViewDefaultURLStr),
            const wxPoint& pos = wxDefaultPosition,
            const wxSize& size = wxDefaultSize,
            long style = 0,
-           const wxString& name = wxWebViewNameStr) = 0;
+           const wxString& name = wxASCII_STR(wxWebViewNameStr)) = 0;
 
     // Factory methods allowing the use of custom factories registered with
     // RegisterFactory
-    static wxWebView* New(const wxString& backend = wxWebViewBackendDefault);
+    static wxWebView* New(const wxString& backend = wxASCII_STR(wxWebViewBackendDefault));
     static wxWebView* New(wxWindow* parent,
                           wxWindowID id,
-                          const wxString& url = wxWebViewDefaultURLStr,
+                          const wxString& url = wxASCII_STR(wxWebViewDefaultURLStr),
                           const wxPoint& pos = wxDefaultPosition,
                           const wxSize& size = wxDefaultSize,
-                          const wxString& backend = wxWebViewBackendDefault,
+                          const wxString& backend = wxASCII_STR(wxWebViewBackendDefault),
                           long style = 0,
-                          const wxString& name = wxWebViewNameStr);
+                          const wxString& name = wxASCII_STR(wxWebViewNameStr));
 
     static void RegisterFactory(const wxString& backend,
                                 wxSharedPtr<wxWebViewFactory> factory);
@@ -201,8 +205,10 @@ public:
     //Zoom
     virtual bool CanSetZoomType(wxWebViewZoomType type) const = 0;
     virtual wxWebViewZoom GetZoom() const = 0;
+    virtual float GetZoomFactor() const = 0;
     virtual wxWebViewZoomType GetZoomType() const = 0;
     virtual void SetZoom(wxWebViewZoom zoom) = 0;
+    virtual void SetZoomFactor(float zoom) = 0;
     virtual void SetZoomType(wxWebViewZoomType zoomType) = 0;
 
     //Selection

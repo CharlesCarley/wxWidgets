@@ -64,6 +64,8 @@ else()
 endif()
 wx_option(wxBUILD_STRIPPED_RELEASE "remove debug symbols in release build" ${wxBUILD_STRIPPED_RELEASE_DEFAULT})
 mark_as_advanced(wxBUILD_STRIPPED_RELEASE)
+wx_option(wxBUILD_PIC "Enable position independent code (PIC)." ON)
+mark_as_advanced(wxBUILD_PIC)
 wx_option(wxUSE_NO_RTTI "disable RTTI support" OFF)
 
 # STL options
@@ -294,6 +296,7 @@ wx_option(wxUSE_COMBOBOX "use wxComboBox class")
 wx_option(wxUSE_COMBOCTRL "use wxComboCtrl class")
 wx_option(wxUSE_COMMANDLINKBUTTON "use wxCommmandLinkButton class")
 wx_option(wxUSE_DATAVIEWCTRL "use wxDataViewCtrl class")
+wx_option(wxUSE_NATIVE_DATAVIEWCTRL "use the native wxDataViewCtrl if available")
 wx_option(wxUSE_DATEPICKCTRL "use wxDatePickerCtrl class")
 wx_option(wxUSE_DETECT_SM "use code to detect X11 session manager" OFF)
 wx_option(wxUSE_DIRPICKERCTRL "use wxDirPickerCtrl class")
@@ -376,7 +379,8 @@ wx_option(wxUSE_WIZARDDLG "use wxWizard")
 # misc GUI options
 # ---------------------------------------------------------------------------
 
-wx_option(wxUSE_MENUS "use wxMenu/wxMenuBar/wxMenuItem classes")
+wx_option(wxUSE_MENUS "use wxMenu and wxMenuItem classes")
+wx_option(wxUSE_MENUBAR "use wxMenuBar class")
 wx_option(wxUSE_MINIFRAME "use wxMiniFrame class")
 wx_option(wxUSE_TOOLTIPS "use wxToolTip class")
 wx_option(wxUSE_SPLINES "use spline drawing code")

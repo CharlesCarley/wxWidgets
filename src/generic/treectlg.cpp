@@ -692,13 +692,16 @@ wxGenericTreeItem *wxGenericTreeItem::HitTest(const wxPoint& point,
 #ifdef __WXMAC__
             // according to the drawing code the triangels are drawn
             // at -4 , -4  from the position up to +10/+10 max
-            if ((point.x > xCross-4) && (point.x < xCross+10) &&
-                (point.y > y_mid-4) && (point.y < y_mid+10) &&
+            const int triangleStart = theCtrl->FromDIP(4);
+            const int triangleEnd = theCtrl->FromDIP(10);
+            if ((point.x > xCross - triangleStart) && (point.x < xCross + triangleEnd) &&
+                (point.y > y_mid - triangleStart) && (point.y < y_mid + triangleEnd) &&
                 HasPlus() && theCtrl->HasButtons() )
 #else
             // 5 is the size of the plus sign
-            if ((point.x > xCross-6) && (point.x < xCross+6) &&
-                (point.y > y_mid-6) && (point.y < y_mid+6) &&
+            const int plusSize = 1 + theCtrl->FromDIP(5);
+            if ((point.x > xCross - plusSize) && (point.x < xCross + plusSize) &&
+                (point.y > y_mid - plusSize) && (point.y < y_mid + plusSize) &&
                 HasPlus() && theCtrl->HasButtons() )
 #endif
             {
@@ -914,6 +917,7 @@ wxBEGIN_EVENT_TABLE(wxGenericTreeCtrl, wxTreeCtrlBase)
     EVT_SET_FOCUS      (wxGenericTreeCtrl::OnSetFocus)
     EVT_KILL_FOCUS     (wxGenericTreeCtrl::OnKillFocus)
     EVT_TREE_ITEM_GETTOOLTIP(wxID_ANY, wxGenericTreeCtrl::OnGetToolTip)
+    EVT_SYS_COLOUR_CHANGED(wxGenericTreeCtrl::OnSysColourChanged)
 wxEND_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -932,24 +936,6 @@ void wxGenericTreeCtrl::Init()
     m_lineHeight = 10;
     m_indent = 15;
     m_spacing = 18;
-
-    m_hilightBrush = new wxBrush
-                         (
-                            wxSystemSettings::GetColour
-                            (
-                                wxSYS_COLOUR_HIGHLIGHT
-                            ),
-                            wxBRUSHSTYLE_SOLID
-                         );
-
-    m_hilightUnfocusedBrush = new wxBrush
-                              (
-                                 wxSystemSettings::GetColour
-                                 (
-                                     wxSYS_COLOUR_BTNSHADOW
-                                 ),
-                                 wxBRUSHSTYLE_SOLID
-                              );
 
     m_imageListButtons = NULL;
     m_ownsImageListButtons = false;
@@ -971,13 +957,6 @@ void wxGenericTreeCtrl::Init()
     m_dndEffectItem = NULL;
 
     m_lastOnSame = false;
-
-#if defined( __WXMAC__ )
-    m_normalFont = wxFont(wxOSX_SYSTEM_FONT_VIEWS);
-#else
-    m_normalFont = wxSystemSettings::GetFont( wxSYS_DEFAULT_GUI_FONT );
-#endif
-    m_boldFont = m_normalFont.Bold();
 }
 
 bool wxGenericTreeCtrl::Create(wxWindow *parent,
@@ -1003,14 +982,7 @@ bool wxGenericTreeCtrl::Create(wxWindow *parent,
         m_spacing = 10;
     }
 
-    wxVisualAttributes attr = GetDefaultAttributes();
-    SetOwnForegroundColour( attr.colFg );
-    SetOwnBackgroundColour( attr.colBg );
-    if (!m_hasFont)
-        SetOwnFont(attr.font);
-
-    m_dottedPen = wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT),
-                        1, wxPENSTYLE_DOT);
+    InitVisualAttributes();
 
     SetInitialSize(size);
 
@@ -1019,9 +991,6 @@ bool wxGenericTreeCtrl::Create(wxWindow *parent,
 
 wxGenericTreeCtrl::~wxGenericTreeCtrl()
 {
-    delete m_hilightBrush;
-    delete m_hilightUnfocusedBrush;
-
     DeleteAllItems();
 
     delete m_renameTimer;
@@ -1034,6 +1003,46 @@ wxGenericTreeCtrl::~wxGenericTreeCtrl()
 void wxGenericTreeCtrl::EnableBellOnNoMatch( bool on )
 {
     m_findBell = on;
+}
+
+void wxGenericTreeCtrl::InitVisualAttributes()
+{
+    // We want to use the default system colours/fonts here unless the user
+    // explicitly configured something different. We also need to reset the
+    // various m_hasXXX variables to false to prevent them from being left set
+    // to "true", as otherwise we wouldn't update the colours/fonts the next
+    // time the system colours change.
+    const wxVisualAttributes attr(GetDefaultAttributes());
+    if ( !m_hasFgCol )
+    {
+        SetOwnForegroundColour(attr.colFg);
+        m_hasFgCol = false;
+    }
+
+    if ( !m_hasBgCol )
+    {
+        SetOwnBackgroundColour(attr.colBg);
+        m_hasBgCol = false;
+    }
+
+    if ( !m_hasFont )
+    {
+        SetOwnFont(attr.font);
+        m_hasFont = false;
+    }
+
+
+    m_hilightBrush = wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
+    m_hilightUnfocusedBrush = wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW));
+
+    m_dottedPen = wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT), 1, wxPENSTYLE_DOT);
+
+#if defined(__WXOSX__)
+    m_normalFont = wxFont(wxOSX_SYSTEM_FONT_VIEWS);
+#else
+    m_normalFont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+#endif
+    m_boldFont = m_normalFont.Bold();
 }
 
 // -----------------------------------------------------------------------------
@@ -2545,7 +2554,7 @@ void wxGenericTreeCtrl::PaintItem(wxGenericTreeItem *item, wxDC& dc)
 
     if ( item->IsSelected() )
     {
-        dc.SetBrush(*(m_hasFocus ? m_hilightBrush : m_hilightUnfocusedBrush));
+        dc.SetBrush(m_hasFocus ? m_hilightBrush : m_hilightUnfocusedBrush);
         drawItemBackground = true;
     }
     else

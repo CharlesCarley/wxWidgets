@@ -271,7 +271,7 @@ wxDataViewItem MyMusicTreeModel::GetParent( const wxDataViewItem &item ) const
 
 bool MyMusicTreeModel::IsContainer( const wxDataViewItem &item ) const
 {
-    // the invisble root node can have children
+    // the invisible root node can have children
     // (in our model always "MyMusic")
     if (!item.IsOk())
         return true;
@@ -625,4 +625,16 @@ bool MyListStoreDerivedModel::IsEnabledByRow(unsigned int row, unsigned int col)
 {
     // disabled the last two checkboxes
     return !(col == 0 && 8 <= row && row <= 9);
+}
+
+// ----------------------------------------------------------------------------
+// MyListStoreHasValueModel
+// ----------------------------------------------------------------------------
+
+bool MyListStoreHasValueModel::HasValue(const wxDataViewItem &item, unsigned int col) const
+{
+    unsigned int row = GetRow( item );
+    // the diagonal entries don't have values. This is just a silly example to demonstrate the
+    // usage of overriding HasValue to specify that some columns don't have values for some items
+    return row != col;
 }

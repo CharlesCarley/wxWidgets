@@ -29,11 +29,10 @@ endif()
 if(APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
     # If no deployment target has been set default to the minimum supported
     # OS X version (this has to be set before the first project() call)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9 CACHE STRING "OS X Deployment Target")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.10 CACHE STRING "macOS Deployment Target")
 endif()
 
 
-project(wxWidgets)
 set(CMAKE_MODULE_PATH ${wxWidgets_SOURCE_DIR})
 
 include(build/cmake/policies.cmake NO_POLICY_SCOPE)
@@ -68,6 +67,8 @@ endif()
 
 set(wxVERSION ${wxMAJOR_VERSION}.${wxMINOR_VERSION}.${wxRELEASE_NUMBER})
 set(wxCOPYRIGHT "1992-2020 wxWidgets")
+
+project(wxWidgets VERSION ${wxVERSION})
 
 include(build/cmake/main.cmake)
 

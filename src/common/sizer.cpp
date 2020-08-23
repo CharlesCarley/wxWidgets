@@ -111,7 +111,7 @@ float wxSizerFlags::DoGetDefaultBorderInPx()
     if ( s_defaultBorderInPx.HasChanged(win) )
     {
         s_defaultBorderInPx.SetAtNewDPI(
-            (float)(5 * (win ? win->GetContentScaleFactor() : 1)));
+            (float)(5 * (win ? win->GetDPIScaleFactor() : 1.0)));
     }
     return s_defaultBorderInPx.Get();
 }
@@ -869,7 +869,7 @@ bool wxSizer::Replace( wxSizer *oldsz, wxSizer *newsz, bool recursive )
 bool wxSizer::Replace( size_t old, wxSizerItem *newitem )
 {
     wxCHECK_MSG( old < m_children.GetCount(), false, wxT("Replace index is out of range") );
-    wxASSERT_MSG( newitem, wxT("Replacing with NULL item") );
+    wxCHECK_MSG( newitem, false, wxT("Replacing with NULL item") );
 
     wxSizerItemList::compatibility_iterator node = m_children.Item( old );
 
@@ -878,10 +878,13 @@ bool wxSizer::Replace( size_t old, wxSizerItem *newitem )
     wxSizerItem *item = node->GetData();
     node->SetData(newitem);
 
-    if (item->IsWindow() && item->GetWindow())
-        item->GetWindow()->SetContainingSizer(NULL);
+    if (wxWindow* const w = item->GetWindow())
+        w->SetContainingSizer(NULL);
 
     delete item;
+
+    if (wxWindow* const w = newitem->GetWindow())
+        w->SetContainingSizer(this);
 
     return true;
 }

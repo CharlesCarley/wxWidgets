@@ -9,7 +9,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "wx/hashmap.h"
-#include <wx/vector.h>
+#include "wx/vector.h"
 
 WX_DECLARE_HASH_MAP(unsigned, wxString, wxIntegerHash, wxIntegerEqual,
                     IntToStringMap);
@@ -264,6 +264,16 @@ class MyListStoreDerivedModel : public wxDataViewListStore
 {
 public:
     virtual bool IsEnabledByRow(unsigned int row, unsigned int col) const wxOVERRIDE;
+};
+
+// ----------------------------------------------------------------------------
+// MyListStoreHasValueModel
+// ----------------------------------------------------------------------------
+
+class MyListStoreHasValueModel : public MyListStoreDerivedModel
+{
+public:
+    virtual bool HasValue(const wxDataViewItem &item, unsigned int col) const wxOVERRIDE;
 };
 
 // ----------------------------------------------------------------------------

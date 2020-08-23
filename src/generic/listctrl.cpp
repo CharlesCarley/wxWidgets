@@ -58,9 +58,6 @@
 // constants
 // ----------------------------------------------------------------------------
 
-// // the height of the header window (FIXME: should depend on its font!)
-// static const int HEADER_HEIGHT = 23;
-
 static const int SCROLL_UNIT_X = 15;
 
 // the spacing between the lines (in report mode)
@@ -1223,7 +1220,6 @@ void wxListHeaderWindow::OnMouse( wxMouseEvent &event )
     // we want to work with logical coords
     int x;
     parent->CalcUnscrolledPosition(event.GetX(), 0, &x, NULL);
-    int y = event.GetY();
 
     if (m_isDragging)
     {
@@ -1276,7 +1272,7 @@ void wxListHeaderWindow::OnMouse( wxMouseEvent &event )
             xpos += m_owner->GetColumnWidth( col );
             m_column = col;
 
-            if ( (abs(x-xpos) < 3) && (y < 22) )
+            if ( abs(x-xpos) < 3 )
             {
                 // near the column border
                 hit_border = true;
@@ -2447,7 +2443,8 @@ void wxListMainWindow::OnMouse( wxMouseEvent &event )
     else
         m_dragCount = 0;
 
-    // The only mouse event that can be generated without any valid item is
+    // The only mouse events that can be generated without any valid item are
+    // wxEVT_LIST_ITEM_DESELECTED for virtual lists, and
     // wxEVT_LIST_ITEM_RIGHT_CLICK as it can be useful to have a global
     // popup menu for the list control itself which should be shown even when
     // the user clicks outside of any item.
@@ -2467,6 +2464,10 @@ void wxListMainWindow::OnMouse( wxMouseEvent &event )
         {
             // reset the selection and bail out
             HighlightAll(false);
+            // generate a DESELECTED event for
+            // virtual multi-selection lists
+            if ( IsVirtual() && !IsSingleSel() )
+                SendNotify( m_lineLastClicked, wxEVT_LIST_ITEM_DESELECTED );
         }
 
         return;
